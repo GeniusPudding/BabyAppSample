@@ -1,17 +1,27 @@
 package com.hackme.babyapp.ui.login
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.telephony.TelephonyManager
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import android.util.Patterns
+import androidx.core.app.ActivityCompat
 import com.hackme.babyapp.data.LoginRepository
 import com.hackme.babyapp.data.Result
-
 import com.hackme.babyapp.R
+import javax.crypto.KeyGenerator
+import javax.crypto.Cipher
+import javax.crypto.SecretKey
+import kotlin.system.exitProcess
 
 class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel() {
-
     private val _loginForm = MutableLiveData<LoginFormState>()
+    private var tag = "Emulator Check:"
     val loginFormState: LiveData<LoginFormState> = _loginForm
 
     private val _loginResult = MutableLiveData<LoginResult>()
@@ -19,6 +29,11 @@ class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel()
 
     fun login(username: String, password: String) {
         // can be launched in a separate asynchronous job
+
+        if(checkBuild()){
+            Log.i("EMULATOR FOUND---","!!EXIT!!")
+            exitProcess(-1)
+        }
         val result = loginRepository.login(username, password)
 
         if (result is Result.Success) {
@@ -50,5 +65,16 @@ class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel()
     // A placeholder password validation check
     private fun isPasswordValid(password: String): Boolean {
         return password.length > 5
+    }
+
+    private fun checkBuild(): Boolean {
+        Log.i("CHECKING", "checkBuild")
+        return if (Build.BOARD === "unknown" || Build.DEVICE.contains("generic")
+            || Build.USER === "android-build") {
+            Log.i(tag, "checkBuild():Emulator Detected!")
+            true
+        } else {
+            false
+        }
     }
 }
